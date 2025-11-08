@@ -1,27 +1,40 @@
 import axiosClient from "../axiosClient";
 
 export const getAllCars = async () => {
-    const res = await axiosClient.get("/api/cars");
-    console.log(res)
-    return res.data.cars;
+  const res = await axiosClient.get("/api/cars");
+  return res.data.cars;
 }
 
 export const getCarById = async (id: string) => {
+  try {
     const res = await axiosClient.get(`/api/car/${id}`);
-    return res;
+    console.log("getCarById response:", res.data);
+    return res.data.car;
+  } catch (error: any) {
+    console.error("getCarById error:", error);
+    throw error;
+  }
 }
 
 export const addNewCar = async (carData: FormData) => {
-  const res = await axiosClient.post("/api/cars", carData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-  return res.data;
+  try {
+    const res = await axiosClient.post("/api/cars", carData);
+    console.log("Raw API response:", res); 
+    return res.data;
+  } catch (error: any) {
+    console.error("API Error:", error);
+    throw error;
+  }
 };
 
 
 export const deleteCarById = async (id: string) => {
+  try {
     const res = await axiosClient.delete(`/api/car/${id}`);
-    return res;
+    console.log("deleteCarById response:", res.data);
+    return res.data;
+  } catch (error: any) {
+    console.error("deleteCarById error:", error);
+    throw error;
+  }
 }

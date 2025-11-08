@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { addNewCar } from "@/lib/api/cars";
+import { Upload, Car, DollarSign, Calendar, Palette, Tag } from "lucide-react";
 
 export default function AddCarPage() {
   const router = useRouter();
@@ -30,71 +31,158 @@ export default function AddCarPage() {
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  setMessage("");
+    e.preventDefault();
+    setLoading(true);
+    setMessage("");
 
-  try {
-    const form = new FormData();
-    form.append("make", formData.make);
-    form.append("model", formData.model);
-    form.append("year", formData.year);
-    form.append("color", formData.color);
-    form.append("price", formData.price);
-    if (image) form.append("file", image);
+    try {
+      const form = new FormData();
+      form.append("make", formData.make);
+      form.append("model", formData.model);
+      form.append("year", formData.year);
+      form.append("color", formData.color);
+      form.append("price", formData.price);
+      if (image) form.append("file", image);
 
-    const res = await addNewCar(form);
-    setMessage(res.message || "Car added successfully!");
-  } catch (error: any) {
-    console.error(error);
-    setMessage(error.response?.data?.message || "Failed to add car");
-  } finally {
-    setLoading(false);
-  }
-};
+      const res = await addNewCar(form);
+      console.log("API Response:", res); // Debug log
 
+      if (res && res.message) {
+        setMessage(res.message);
+        // Reset form on success
+        if (res.message.includes('successfully')) {
+          setFormData({
+            make: "",
+            model: "",
+            year: "",
+            color: "",
+            price: "",
+          });
+          setImage(null);
+          // Optionally redirect after success
+          setTimeout(() => {
+            router.push('/');
+          }, 2000);
+        }
+      } else {
+        setMessage("Car added successfully!");
+      }
+    } catch (error: any) {
+      console.error("Error details:", error);
+      console.error("Error response:", error.response);
+
+      // More detailed error handling
+      if (error.response) {
+        // Server responded with error status
+        setMessage(error.response.data?.message || `Server error: ${error.response.status}`);
+      } else if (error.request) {
+        // Request was made but no response received
+        setMessage("Network error: Unable to connect to server");
+      } else {
+        // Something else happened
+        setMessage(error.message || "An unexpected error occurred");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fieldIcons = {
+    make: Car,
+    model: Tag,
+    year: Calendar,
+    color: Palette,
+    price: DollarSign
+  };
 
   return (
-    <div className="max-w-lg mx-auto mt-10 p-6 bg-black shadow-md rounded-lg">
-      <h1 className="text-2xl font-semibold mb-6 text-center">Add New Car</h1>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {["make", "model", "year", "color", "price"].map((field) => (
-          <div key={field}>
-            <label className="block font-medium capitalize">{field}</label>
-            <input
-              type={field === "year" || field === "price" ? "number" : "text"}
-              name={field}
-              value={formData[field as keyof typeof formData]}
-              onChange={handleChange}
-              className="w-full border rounded-md px-3 py-2 outline-none focus:ring focus:ring-gray-200"
-              required
-            />
+    <div className="min-h-screen bg-black relative overflow-hidden">
+      <div
+        className="absolute inset-0 opacity-10"
+        style={{
+          backgroundImage: 'url("https://images.unsplash.com/photo-1503376780353-7e6692767b70?ixlib=rb-4.0.3&auto=format&fit=crop&w=1920&q=80")',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundAttachment: 'fixed'
+        }}
+      ></div>
+
+      <div className="relative z-10 container mx-auto px-6 py-12">
+        <div className="max-w-2xl mx-auto">
+          <div className="text-center mb-12">
+            <h1 className="text-5xl font-bold mb-4 gradient-text">Add New Car</h1>
+            <p className="text-gray-300 text-lg">Add your premium vehicle to our collection</p>
           </div>
-        ))}
 
-        <div>
-          <label className="block font-medium">Car Image</label>
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handleFileChange}
-            className="w-full border rounded-md px-3 py-2"
-            required
-          />
+          <div className="glass-dark rounded-2xl p-8 hover-glow">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {["make", "model", "year", "color", "price"].map((field) => {
+                const Icon = fieldIcons[field as keyof typeof fieldIcons];
+                return (
+                  <div key={field} className="space-y-2">
+                    <label className="flex items-center gap-2 text-white font-medium capitalize text-lg">
+                      <Icon className="w-5 h-5 text-orange-500" />
+                      {field}
+                    </label>
+                    <input
+                      type={field === "year" || field === "price" ? "number" : "text"}
+                      name={field}
+                      value={formData[field as keyof typeof formData]}
+                      onChange={handleChange}
+                      className="w-full glass-orange rounded-lg px-4 py-3 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all duration-300"
+                      placeholder={`Enter ${field}...`}
+                      required
+                    />
+                  </div>
+                );
+              })}
+
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-white font-medium text-lg">
+                  <Upload className="w-5 h-5 text-orange-500" />
+                  Car Image
+                </label>
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleFileChange}
+                    className="w-full glass-orange rounded-lg px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-orange-500/20 file:text-orange-400 hover:file:bg-orange-500/30 transition-all duration-300"
+                    required
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold text-lg hover:from-orange-600 hover:to-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-orange-500/25"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    Uploading...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center gap-2">
+                    <Upload className="w-5 h-5" />
+                    Add Car to Collection
+                  </div>
+                )}
+              </button>
+            </form>
+
+            {message && (
+              <div className={`mt-6 p-4 rounded-lg text-center font-medium ${message.includes('successfully')
+                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                : 'bg-red-500/20 text-red-400 border border-red-500/30'
+                }`}>
+                {message}
+              </div>
+            )}
+          </div>
         </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full py-2 bg-black text-white rounded-md hover:bg-gray-800 transition"
-        >
-          {loading ? "Uploading..." : "Add Car"}
-        </button>
-      </form>
-
-      {message && (
-        <p className="mt-4 text-center text-gray-700 font-medium">{message}</p>
-      )}
+      </div>
     </div>
   );
 }
