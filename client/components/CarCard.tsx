@@ -43,7 +43,7 @@ const CarCard = ({ car }: { car: Car }) => {
 
   return (
     <>
-      <div className='group card-hover glass-dark rounded-xl overflow-hidden hover-glow transition-all duration-500 relative'>
+      <div className='group glass-dark rounded-xl overflow-hidden transition-all duration-500 relative'>
         <Link href={`/car/${car._id}`}>
           <div className="relative overflow-hidden">
             <img
