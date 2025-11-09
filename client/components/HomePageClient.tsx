@@ -3,12 +3,38 @@
 import { Car } from '@/types/car'
 import CarList from './CarList'
 import HeroSection from './HeroSection'
+import { getAllCars } from '@/lib/api/cars'
+import { useState, useEffect } from 'react'
+import LoadingSpinner from './LoadingSpinner'
 
 interface HomePageClientProps {
-    cars: Car[]
+    initialCars: Car[]
 }
 
-const HomePageClient = ({ cars }: HomePageClientProps) => {
+const HomePageClient = ({ initialCars }: HomePageClientProps) => {
+    const [cars, setCars] = useState<Car[]>(initialCars)
+    const [loading, setLoading] = useState(false)
+
+    useEffect(() => {
+        const fetchCars = async () => {
+            setLoading(true)
+            try {
+                const fetchedCars = await getAllCars()
+                setCars(fetchedCars)
+            } catch (error) {
+                console.error('Error fetching cars:', error)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        fetchCars()
+    }, [])
+
+    if (loading && cars.length === 0) {
+        return <LoadingSpinner />
+    }
+
     return (
         <>
             {/* Hero Section */}
@@ -29,7 +55,7 @@ const HomePageClient = ({ cars }: HomePageClientProps) => {
 
                 <div className='relative z-10 container mx-auto px-6'>
                     <div className='text-center mb-16'>
-                        <h2 className='text-5xl font-bold mb-6 gradient-text'>
+                        <h2 className='text-5xl font-bold gradient-text mb-6'>
                             Featured Collection
                         </h2>
                         <p className='text-xl text-gray-300 max-w-2xl mx-auto'>
