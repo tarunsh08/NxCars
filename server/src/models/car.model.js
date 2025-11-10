@@ -11,7 +11,9 @@ const carSchema = new mongoose.Schema({
     },
     year: {
         type: Number,
-        required: true
+        required: true,
+        min: [1900, "Year must be after 1900"],
+        max: [2025, "Year must be before 2025"]
     },
     color: {
         type: String,
@@ -19,7 +21,9 @@ const carSchema = new mongoose.Schema({
     },
     price: {
         type: Number,
-        required: true
+        required: true,
+        min: [0, "Price cannot be negative"],
+        max: [1000000, "Price must be less than 1000000"]
     },
     image: {
         type: String,

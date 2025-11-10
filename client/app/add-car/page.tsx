@@ -17,23 +17,95 @@ export default function AddCarPage() {
   const [image, setImage] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: "" }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
+      // Clear file error when user selects a file
+      if (errors.image) {
+        setErrors(prev => ({ ...prev, image: "" }));
+      }
     }
+  };
+
+  const validateForm = () => {
+    const newErrors: Record<string, string> = {};
+
+    // Make validation
+    if (!formData.make.trim()) {
+      newErrors.make = "Make is required";
+    } else if (formData.make.length > 50) {
+      newErrors.make = "Make cannot exceed 50 characters";
+    }
+
+    // Model validation
+    if (!formData.model.trim()) {
+      newErrors.model = "Model is required";
+    } else if (formData.model.length > 50) {
+      newErrors.model = "Model cannot exceed 50 characters";
+    }
+
+    // Year validation
+    if (!formData.year) {
+      newErrors.year = "Year is required";
+    } else {
+      const yearNum = parseInt(formData.year);
+      if (yearNum < 1900) {
+        newErrors.year = "Year must be after 1900";
+      } else if (yearNum > 2025) {
+        newErrors.year = "Year must be before 2025";
+      }
+    }
+
+    // Color validation
+    if (!formData.color.trim()) {
+      newErrors.color = "Color is required";
+    }
+
+    // Price validation
+    if (!formData.price) {
+      newErrors.price = "Price is required";
+    } else {
+      const priceNum = parseFloat(formData.price);
+      if (priceNum < 0) {
+        newErrors.price = "Price cannot be negative";
+      } else if (priceNum > 1000000) {
+        newErrors.price = "Price must be less than $1,000,000";
+      }
+    }
+
+    // Image validation
+    if (!image) {
+      newErrors.image = "Car image is required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+    // Validate form before submission
+    if (!validateForm()) {
+      setLoading(false);
+      return;
+    }
 
     try {
       const form = new FormData();
@@ -59,6 +131,7 @@ export default function AddCarPage() {
             price: "",
           });
           setImage(null);
+          setErrors({});
           // Optionally redirect after success
           setTimeout(() => {
             router.push('/');
@@ -129,10 +202,18 @@ export default function AddCarPage() {
                       name={field}
                       value={formData[field as keyof typeof formData]}
                       onChange={handleChange}
-                      className="w-full glass-orange rounded-lg px-4 py-3 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all duration-300"
+                      className={`w-full glass-orange rounded-lg px-4 py-3 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-orange-500/50 transition-all duration-300 ${
+                        errors[field] ? 'border border-red-500/50' : ''
+                      }`}
                       placeholder={`Enter ${field}...`}
                       required
                     />
+                    {errors[field] && (
+                      <p className="text-red-400 text-sm flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                        {errors[field]}
+                      </p>
+                    )}
                   </div>
                 );
               })}
@@ -147,10 +228,18 @@ export default function AddCarPage() {
                     type="file"
                     accept="image/*"
                     onChange={handleFileChange}
-                    className="w-full glass-orange rounded-lg px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-orange-500/20 file:text-orange-400 hover:file:bg-orange-500/30 transition-all duration-300"
+                    className={`w-full glass-orange rounded-lg px-4 py-3 text-white file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-orange-500/20 file:text-orange-400 hover:file:bg-orange-500/30 transition-all duration-300 ${
+                      errors.image ? 'border border-red-500/50' : ''
+                    }`}
                     required
                   />
                 </div>
+                {errors.image && (
+                  <p className="text-red-400 text-sm flex items-center gap-1">
+                    <span className="w-1.5 h-1.5 bg-red-400 rounded-full"></span>
+                    {errors.image}
+                  </p>
+                )}
               </div>
 
               <button
@@ -173,10 +262,11 @@ export default function AddCarPage() {
             </form>
 
             {message && (
-              <div className={`mt-6 p-4 rounded-lg text-center font-medium ${message.includes('successfully')
-                ? 'bg-green-500/20 text-green-400 border border-green-500/30'
-                : 'bg-red-500/20 text-red-400 border border-red-500/30'
-                }`}>
+              <div className={`mt-6 p-4 rounded-lg text-center font-medium ${
+                message.includes('successfully')
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                  : 'bg-red-500/20 text-red-400 border border-red-500/30'
+              }`}>
                 {message}
               </div>
             )}
